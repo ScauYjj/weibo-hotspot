@@ -1,0 +1,69 @@
+name: Weibo Hotspot Analysis
+
+on:
+  # 每天 UTC 00:00 执行（北京时间 08:00）
+  schedule:
+    - cron: '0 0 * * *'
+  # 支持手动触发
+  workflow_dispatch:
+    inputs:
+      max_hotspots:
+        description: '分析热点数量（默认15）'
+        required: false
+        default: '15'
+      max_budget:
+        description: '预算上限 USD（默认5）'
+        required: false
+        default: '5'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run Agent
+        run: python scripts/weibo_hotspot.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TIANAPI_KEY: ${{ secrets.TIANAPI_KEY }}
+          MAX_HOTSPOTS: ${{ github.event.inputs.max_hotspots || '15' }}
+          MAX_BUDGET_USD: ${{ github.event.inputs.max_budget || '5' }}
+
+      - name: Commit report to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "reports/*.html" "reports/*.json" || true
+          git diff --staged --quiet || git commit -m "chore: 微博热搜分析报告 $(date +%Y-%m-%d)"
+          git push
+
+      # ---- GitHub Pages 部署 ----
+      - name: Setup Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports
+
+      - name: Deploy to Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/deploy-pages@v4
