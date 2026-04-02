@@ -1,9 +1,10 @@
 name: Weibo Hotspot Analysis
 
 on:
-  # 每天 UTC 00:00 执行（北京时间 08:00）
+  # 每天 UTC 00:00 和 10:00 执行（北京时间 08:00 和 18:00）
   schedule:
     - cron: '0 0 * * *'
+    - cron: '0 10 * * *'
   # 支持手动触发
   workflow_dispatch:
     inputs:
