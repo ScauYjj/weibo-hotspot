@@ -43,17 +43,17 @@ def fetch_hotspots():
     if data.get("code") != 200:
         raise RuntimeError(f"天行 API 错误: code={data.get('code')}, msg={data.get('msg')}")
 
-    items = data.get("result", {}).get("data", [])
+    items = data.get("result", {}).get("list", [])
     if not items:
         raise RuntimeError("API 返回数据为空")
 
     hotspots = []
     for item in items[:MAX_HOTSPOTS]:
         hotspots.append({
-            "word": item.get("word", ""),
-            "hot_value": item.get("hot_value", "0"),
-            "label": item.get("label_name", ""),
-            "category": item.get("category", "综合"),
+            "word": item.get("hotword", ""),
+            "hot_value": item.get("hotwordnum", "0"),
+            "label": item.get("hottag", ""),
+            "category": "综合",
         })
 
     print(f"  -> 获取到 {len(hotspots)} 条热搜数据\n")
