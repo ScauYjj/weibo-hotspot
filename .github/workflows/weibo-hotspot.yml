@@ -11,10 +11,6 @@ on:
         description: '分析热点数量（默认15）'
         required: false
         default: '15'
-      max_budget:
-        description: '预算上限 USD（默认5）'
-        required: false
-        default: '5'
 
 permissions:
   contents: write
@@ -37,13 +33,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
 
-      - name: Run Agent
+      - name: Run analysis
         run: python scripts/weibo_hotspot.py
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
+          AI_MODEL: ${{ secrets.AI_MODEL }}
           TIANAPI_KEY: ${{ secrets.TIANAPI_KEY }}
           MAX_HOTSPOTS: ${{ github.event.inputs.max_hotspots || '15' }}
-          MAX_BUDGET_USD: ${{ github.event.inputs.max_budget || '5' }}
 
       - name: Commit report to repository
         run: |
@@ -53,7 +50,6 @@ jobs:
           git diff --staged --quiet || git commit -m "chore: 微博热搜分析报告 $(date +%Y-%m-%d)"
           git push
 
-      # ---- GitHub Pages 部署 ----
       - name: Setup Pages
         if: github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v4
